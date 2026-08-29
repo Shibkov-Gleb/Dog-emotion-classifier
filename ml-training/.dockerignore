@@ -1,0 +1,5 @@
+data
+notebooks
+saved_models
+__pycache__
+*.pyc

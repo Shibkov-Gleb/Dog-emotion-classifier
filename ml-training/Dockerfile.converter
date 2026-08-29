@@ -1,0 +1,17 @@
+FROM tensorflow/tensorflow:2.16.1
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install \
+    keras==3.15.0 \
+    "numpy<2" \
+    tensorflow==2.16.1 \
+    tensorflowjs==4.22.0 \
+    tf-keras==2.16.0 \
+    tensorflow-decision-forests==1.9.0
+
+COPY convert-model.sh /usr/local/bin/convert-model
+COPY prepare-model.py /usr/local/bin/prepare-model.py
+COPY normalize-tfjs-model.py /usr/local/bin/normalize-tfjs-model.py
+RUN chmod +x /usr/local/bin/convert-model
+
+ENTRYPOINT ["/usr/local/bin/convert-model"]
