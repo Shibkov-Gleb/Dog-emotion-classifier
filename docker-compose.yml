@@ -1,0 +1,43 @@
+services:
+  model-converter:
+    build:
+      context: ./ml-training
+      dockerfile: Dockerfile.converter
+    environment:
+      MODEL_INPUT_PATH: /models/dog_emotion_resnet50.keras
+      MODEL_OUTPUT_DIR: /models/tfjs
+    volumes:
+      - ./ml-training/saved_models:/models
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      PORT: 4000
+      MODEL_PATH: /app/model/model.json
+      MAX_IMAGE_SIZE_MB: ${MAX_IMAGE_SIZE_MB:-10}
+      CORS_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    volumes:
+      - ./ml-training/saved_models/tfjs:/app/model:ro
+    depends_on:
+      model-converter:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    environment:
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
